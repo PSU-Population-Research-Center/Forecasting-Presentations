@@ -1,0 +1,598 @@
+---
+title: "Oregon Population Forecast Program"
+subtitle: "Preliminary Forecasts for Counties & UGBs"
+author: "Polk County"
+institute: "Portland State University Population Research Center"
+date: "November 2024"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+class: center
+
+# Comments or Questions?
+
+## Contact PSUPRC
+Email: [askprc@pdx.edu](mailto:askprc@pdx.edu)  
+Telephone: 503-725-3922
+
+
+## Preliminary Population Projections
+https://www.pdx.edu/population-research/population-forecasts
+
+---
+
+class: center
+
+# PSUPRC Project Team
+
+.pull-left[
+
+**Huda Alkitkat, PhD.**  
+*Population Estimates Manager*
+
+**Seth Dowden**  
+*Research Assistant*
+
+**Neal Marquez, PhD.**  
+*Population Forecast Manager*
+
+**Gilbert Montcho, PhD.**  
+*Demographic & Labor Econ Analyst*
+
+**Scott Nordstrom, PhD.**  
+*Post-Doctoral Researcher*
+]
+
+.pull-right[
+**Ethan Sharygin, PhD.**  
+*Director*
+
+**Aja Sutton, PhD.**  
+*Post-Doctoral Researcher*
+
+**David Swanson, PhD.**  
+*Research Associate*
+
+**Suniva Thangaraj**  
+*Program Manager*
+
+**Joshua Wilde, PhD.**  
+*Research Scientist*
+]
+
+---
+
+# Polk County Outline
+
+- Population Overview
+- Total Population
+- Births
+- Deaths
+- Migration
+- Aging
+- Race & Ethnicity
+- UGB Forecasts
+
+---
+
+# Polk at a Glance: 2020 Census
+
+``` {css, echo =F} 
+    .pulll-left {
+      float: left;
+      width: 20%;
+    }
+
+    .pulll-right {
+      float: right;
+     width: 68%;
+   }
+```
+
+``` {css, echo =F} 
+    .pux-left {
+      float: left;
+      width: 38%;
+    }
+
+    .pux-right {
+      float: right;
+     width: 58%;
+   }
+```
+
+```{css, echo = F}
+.city table {
+  font-size: 14px;     
+}
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(plotly)
+focus_county <- "Polk"
+model <- "model_22"
+model_ugb <- "model_22a_constrained"
+
+county_plots <- "../../../../model_plots/plots_" %>%
+    str_c(model, ".rds") %>%
+    read_rds()
+ugb_plots <- "../../../../model_plots/ugb_plots_" %>%
+    str_c(model_ugb, ".rds") %>%
+    read_rds()
+map_list <- "../../../../maps/ugb_city_compare_html/" %>% 
+    str_c(focus_county, ".rds") %>%
+    read_rds()
+sector_plots <-  "../../../../processing_plots/sector_trends/sector_plots.rds" %>% 
+    read_rds()
+mig_plots <- "../../../../processing_plots/county_migration/" %>%
+    str_c("county_migration.rds") %>%
+    read_rds()
+
+source("../../../../../Utilities/00_common_functions.R")
+
+null0 <- capture.output(place_stat_df <- read_hist_data(
+    county = FALSE, adjust_for_inflation = TRUE) %>%
+    left_join(
+        distinct(read_csv(ugb_cw_file), COUNTYID, CITYID, COUNTY, UGB),
+        by = "CITYID", relationship = "many-to-many") %>% 
+    filter(COUNTY == focus_county & UGB != "Metro") %>%
+    filter(YEAR %in% c(1980, 2000, 2020)) %>%
+    select(CITY, POP = POPULATION, HU, OVER65, OCC, EMPRATE, PPH, MHI, YEAR) %>%
+    mutate(OVER65 = OVER65/POP*100, OCC = OCC/HU*100, EMPRATE = EMPRATE*100) %>%
+    mutate(across(OVER65:PPH, function(x)sprintf("%.2f", x))) %>%
+    mutate(across(POP:HU, function(x)prettyNum(x, ","))) %>%
+    mutate(OVER65 = str_c(OVER65, "%")) %>%
+    mutate(OCC = str_c(OCC, "%")) %>%
+    mutate(EMPRATE = str_c(EMPRATE, "%")) %>%
+    mutate(MHI = str_c("$", prettyNum(round(MHI), ","))) %>%
+    select(
+        CITY, YEAR, `Pop 65+` = OVER65, `Housing Units` = HU,
+        `Housing Occupancy` = OCC, `Persons Per Household` = PPH,
+        `Household Income` = MHI, `Employment Rate` = EMPRATE) %>%
+    pivot_longer(-(CITY:YEAR)) %>%
+    pivot_wider(names_from = YEAR) %>%
+    rename(Metric = name))
+
+cen_demog_df <- read_hist_data(OR_only = TRUE, adjust_for_inflation = FALSE)
+cen_demog_df %>%
+    select(-EMPRATE) %>%
+    group_by(YEAR) %>%
+    summarise(across(POPULATION:UNDER18, sum), .groups = "drop") %>%
+    mutate(COUNTY = "Oregon") %>%
+    bind_rows(cen_demog_df) %>%
+    mutate(UNDER18 = round(UNDER18/POPULATION*100, 2)) %>%
+    mutate(UNDER18 = str_c(sprintf("%.02f", UNDER18), "%")) %>%
+    mutate(OVER65 = round(OVER65/POPULATION*100, 2)) %>%
+    mutate(OVER65 = str_c(sprintf("%.02f", OVER65), "%")) %>%
+    mutate(NONWHITE = round((1-(WHITE/POPULATION))*100, 2)) %>%
+    mutate(NONWHITE = str_c(sprintf("%.02f", NONWHITE), "%")) %>%
+    mutate(PPH = round(((POPULATION - GQ)/OCC), 2)) %>%
+    mutate(PPH = str_c(
+        sprintf("%.02f", PPH), " (",
+        prettyNum(HU, big.mark = ","), " units)")) %>%
+    mutate(POPULATION = prettyNum(POPULATION, big.mark = ",")) %>%
+    filter(YEAR == 2020, COUNTY %in% c("Oregon", focus_county)) %>%
+    select(
+        COUNTY,
+        `Total Population` = POPULATION,
+        `Population Aged 0-17` = UNDER18,
+        `Population Aged 65+` = OVER65,
+        `Population non-White` = NONWHITE,
+        `Persons per Household` = PPH) %>%
+    mutate(COUNTY = fct_rev(fct_relevel(COUNTY, "Oregon"))) %>%
+    arrange(COUNTY) %>%
+    pivot_longer(-COUNTY, names_to = "Statistic") %>%
+    pivot_wider(names_from = COUNTY, values_from = value) %>%
+    knitr::kable(format = 'html')
+    
+```
+
+---
+
+# Polk Employment Changes
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(sector_plots[[focus_county]], tooltip = "text")
+```
+
+---
+
+# Polk Migration Flows
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(mig_plots[[focus_county]], tooltip = "text")
+```
+
+---
+
+# Polk Population
+
+.pulll-left[
+We project that Polk's population will continue to grow, albeit at a slower rate than what has been observed in the past.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$county_pop[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Polk Compositional Changes
+
+.pulll-left[
+Historically, population growth has come from natural change and net migration. In the future it will be driven solely by net migration.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$comp_change[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Polk Births
+
+.pulll-left[
+Births will remain relatively stable over time as the population grows and fertility rates decline.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$births[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Polk Deaths
+
+.pulll-left[
+Deaths are anticipated to increase as the population ages.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$deaths[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Polk Life Expectancy & TFR
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px", dpi=300}
+county_plots$sum_plots[[focus_county]]
+```
+
+---
+
+# Population Pyramids
+
+.pulll-left[
+Population aging will continue to occur but not have as great of an impact as the rest of Oregon.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$age_structure[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Polk Race and Ethnicity
+
+.pulll-left[
+Hispanic population growth anticipated to be major contributor to population growth.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$raceN[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+
+# Polk UGB Population Changes
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px", out.width="700px"}
+ggplotly(ugb_plots$group_ugb[[focus_county]], tooltip = "text")
+```
+
+---
+
+class: city
+
+# Polk UGBs: Dallas in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Dallas`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Dallas") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Polk County: Dallas UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Dallas`
+```
+
+---
+
+# Dallas UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Dallas`
+```
+
+---
+
+# Dallas UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Dallas`
+```
+
+---
+
+class: city
+
+# Polk UGBs: Falls City in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Falls City`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Falls City") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Polk County: Falls City UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Falls City`
+```
+
+---
+
+# Falls City UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Falls City`
+```
+
+---
+
+# Falls City UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Falls City`
+```
+
+---
+
+class: city
+
+# Polk UGBs: Independence in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Independence`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Independence") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Polk County: Independence UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Independence`
+```
+
+---
+
+# Independence UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Independence`
+```
+
+---
+
+# Independence UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Independence`
+```
+
+---
+
+class: city
+
+# Polk UGBs: Monmouth in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Monmouth`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Monmouth") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Polk County: Monmouth UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Monmouth`
+```
+
+---
+
+# Monmouth UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Monmouth`
+```
+
+---
+
+# Monmouth UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Monmouth`
+```
+
+---
+
+class: city
+
+# Polk UGBs: Salem in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Salem`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Salem") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Polk County: Salem UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Salem`
+```
+
+---
+
+# Salem UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Salem`
+```
+
+---
+
+# Salem UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Salem`
+```
+
+---
+
+class: city
+
+# Polk UGBs: Willamina in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Willamina`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Willamina") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Polk County: Willamina UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Willamina`
+```
+
+---
+
+# Willamina UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Willamina`
+```
+
+---
+
+# Willamina UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Willamina`
+```
+
+---
+
+
+class: center
+
+# Comments or Questions?
+
+## Contact PSUPRC
+Email: [askprc@pdx.edu](mailto:askprc@pdx.edu)  
+Telephone: 503-725-3922
+
+
+## Preliminary Population Projections
+https://www.pdx.edu/population-research/population-forecasts
+

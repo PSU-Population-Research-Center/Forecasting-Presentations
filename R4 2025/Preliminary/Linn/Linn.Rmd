@@ -1,0 +1,1003 @@
+---
+title: "Oregon Population Forecast Program"
+subtitle: "Preliminary Forecasts for Counties & UGBs"
+author: "Linn County"
+institute: "Portland State University Population Research Center"
+date: "November 2024"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+class: center
+
+# Comments or Questions?
+
+## Contact PSUPRC
+Email: [askprc@pdx.edu](mailto:askprc@pdx.edu)  
+Telephone: 503-725-3922
+
+
+## Preliminary Population Projections
+https://www.pdx.edu/population-research/population-forecasts
+
+---
+
+class: center
+
+# PSUPRC Project Team
+
+.pull-left[
+
+**Huda Alkitkat, PhD.**  
+*Population Estimates Manager*
+
+**Seth Dowden**  
+*Research Assistant*
+
+**Neal Marquez, PhD.**  
+*Population Forecast Manager*
+
+**Gilbert Montcho, PhD.**  
+*Demographic & Labor Econ Analyst*
+
+**Scott Nordstrom, PhD.**  
+*Post-Doctoral Researcher*
+]
+
+.pull-right[
+**Ethan Sharygin, PhD.**  
+*Director*
+
+**Aja Sutton, PhD.**  
+*Post-Doctoral Researcher*
+
+**David Swanson, PhD.**  
+*Research Associate*
+
+**Suniva Thangaraj**  
+*Program Manager*
+
+**Joshua Wilde, PhD.**  
+*Research Scientist*
+]
+
+---
+
+# Linn County Outline
+
+- Population Overview
+- Total Population
+- Births
+- Deaths
+- Migration
+- Aging
+- Race & Ethnicity
+- UGB Forecasts
+
+---
+
+# Linn at a Glance: 2020 Census
+
+``` {css, echo =F} 
+    .pulll-left {
+      float: left;
+      width: 20%;
+    }
+
+    .pulll-right {
+      float: right;
+     width: 68%;
+   }
+```
+
+``` {css, echo =F} 
+    .pux-left {
+      float: left;
+      width: 38%;
+    }
+
+    .pux-right {
+      float: right;
+     width: 58%;
+   }
+```
+
+```{css, echo = F}
+.city table {
+  font-size: 14px;     
+}
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(plotly)
+focus_county <- "Linn"
+model <- "model_22"
+model_ugb <- "model_22a_constrained"
+
+county_plots <- "../../../../model_plots/plots_" %>%
+    str_c(model, ".rds") %>%
+    read_rds()
+ugb_plots <- "../../../../model_plots/ugb_plots_" %>%
+    str_c(model_ugb, ".rds") %>%
+    read_rds()
+map_list <- "../../../../maps/ugb_city_compare_html/" %>% 
+    str_c(focus_county, ".rds") %>%
+    read_rds()
+sector_plots <-  "../../../../processing_plots/sector_trends/sector_plots.rds" %>% 
+    read_rds()
+mig_plots <- "../../../../processing_plots/county_migration/" %>%
+    str_c("county_migration.rds") %>%
+    read_rds()
+
+source("../../../../../Utilities/00_common_functions.R")
+
+null0 <- capture.output(place_stat_df <- read_hist_data(
+    county = FALSE, adjust_for_inflation = TRUE) %>%
+    left_join(
+        distinct(read_csv(ugb_cw_file), COUNTYID, CITYID, COUNTY, UGB),
+        by = "CITYID", relationship = "many-to-many") %>% 
+    filter(COUNTY == focus_county & UGB != "Metro") %>%
+    filter(YEAR %in% c(1980, 2000, 2020)) %>%
+    select(CITY, POP = POPULATION, HU, OVER65, OCC, EMPRATE, PPH, MHI, YEAR) %>%
+    mutate(OVER65 = OVER65/POP*100, OCC = OCC/HU*100, EMPRATE = EMPRATE*100) %>%
+    mutate(across(OVER65:PPH, function(x)sprintf("%.2f", x))) %>%
+    mutate(across(POP:HU, function(x)prettyNum(x, ","))) %>%
+    mutate(OVER65 = str_c(OVER65, "%")) %>%
+    mutate(OCC = str_c(OCC, "%")) %>%
+    mutate(EMPRATE = str_c(EMPRATE, "%")) %>%
+    mutate(MHI = str_c("$", prettyNum(round(MHI), ","))) %>%
+    select(
+        CITY, YEAR, `Pop 65+` = OVER65, `Housing Units` = HU,
+        `Housing Occupancy` = OCC, `Persons Per Household` = PPH,
+        `Household Income` = MHI, `Employment Rate` = EMPRATE) %>%
+    pivot_longer(-(CITY:YEAR)) %>%
+    pivot_wider(names_from = YEAR) %>%
+    rename(Metric = name))
+
+cen_demog_df <- read_hist_data(OR_only = TRUE, adjust_for_inflation = FALSE)
+cen_demog_df %>%
+    select(-EMPRATE) %>%
+    group_by(YEAR) %>%
+    summarise(across(POPULATION:UNDER18, sum), .groups = "drop") %>%
+    mutate(COUNTY = "Oregon") %>%
+    bind_rows(cen_demog_df) %>%
+    mutate(UNDER18 = round(UNDER18/POPULATION*100, 2)) %>%
+    mutate(UNDER18 = str_c(sprintf("%.02f", UNDER18), "%")) %>%
+    mutate(OVER65 = round(OVER65/POPULATION*100, 2)) %>%
+    mutate(OVER65 = str_c(sprintf("%.02f", OVER65), "%")) %>%
+    mutate(NONWHITE = round((1-(WHITE/POPULATION))*100, 2)) %>%
+    mutate(NONWHITE = str_c(sprintf("%.02f", NONWHITE), "%")) %>%
+    mutate(PPH = round(((POPULATION - GQ)/OCC), 2)) %>%
+    mutate(PPH = str_c(
+        sprintf("%.02f", PPH), " (",
+        prettyNum(HU, big.mark = ","), " units)")) %>%
+    mutate(POPULATION = prettyNum(POPULATION, big.mark = ",")) %>%
+    filter(YEAR == 2020, COUNTY %in% c("Oregon", focus_county)) %>%
+    select(
+        COUNTY,
+        `Total Population` = POPULATION,
+        `Population Aged 0-17` = UNDER18,
+        `Population Aged 65+` = OVER65,
+        `Population non-White` = NONWHITE,
+        `Persons per Household` = PPH) %>%
+    mutate(COUNTY = fct_rev(fct_relevel(COUNTY, "Oregon"))) %>%
+    arrange(COUNTY) %>%
+    pivot_longer(-COUNTY, names_to = "Statistic") %>%
+    pivot_wider(names_from = COUNTY, values_from = value) %>%
+    knitr::kable(format = 'html')
+    
+```
+
+---
+
+# Linn Employment Changes
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(sector_plots[[focus_county]], tooltip = "text")
+```
+
+---
+
+# Linn Migration Flows
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(mig_plots[[focus_county]], tooltip = "text")
+```
+
+---
+
+# Linn Population
+
+.pulll-left[
+Linn's population is expected to grow nearly keeping trak with previous projections. 
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$county_pop[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Linn Compositional Changes
+
+.pulll-left[
+The impact of negative natural change is expected to increase in the coming years, offsetting growth from migration. 
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$comp_change[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Linn Births
+
+.pulll-left[
+Births are expected to decline modestly in the coming years as TFR declines and the population grows.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$births[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Linn Deaths
+
+.pulll-left[
+Deaths are expected to increase over time as the population ages.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$deaths[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Linn Life Expectancy & TFR
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px", dpi=300}
+county_plots$sum_plots[[focus_county]]
+```
+
+---
+
+# Population Pyramids
+
+.pulll-left[
+The population is expected to continue to age becoming more "top heavy" over time.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$age_structure[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Linn Race and Ethnicity
+
+.pulll-left[
+Linn's non-White population will continue to grow at a faster rate compared to the White population.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$raceN[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+
+# Linn UGB Population Changes
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px", out.width="700px"}
+ggplotly(ugb_plots$group_ugb[[focus_county]], tooltip = "text")
+```
+
+---
+
+class: city
+
+# Linn UGBs: Albany in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Albany`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Albany") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Albany UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Albany`
+```
+
+---
+
+# Albany UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Albany`
+```
+
+---
+
+# Albany UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Albany`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Brownsville in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Brownsville`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Brownsville") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Brownsville UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Brownsville`
+```
+
+---
+
+# Brownsville UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Brownsville`
+```
+
+---
+
+# Brownsville UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Brownsville`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Gates in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Gates`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Gates") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Gates UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Gates`
+```
+
+---
+
+# Gates UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Gates`
+```
+
+---
+
+# Gates UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Gates`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Halsey in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Halsey`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Halsey") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Halsey UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Halsey`
+```
+
+---
+
+# Halsey UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Halsey`
+```
+
+---
+
+# Halsey UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Halsey`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Harrisburg in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Harrisburg`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Harrisburg") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Harrisburg UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Harrisburg`
+```
+
+---
+
+# Harrisburg UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Harrisburg`
+```
+
+---
+
+# Harrisburg UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Harrisburg`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Idanha in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Idanha`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Idanha") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Idanha UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Idanha`
+```
+
+---
+
+# Idanha UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Idanha`
+```
+
+---
+
+# Idanha UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Idanha`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Lebanon in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Lebanon`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Lebanon") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Lebanon UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Lebanon`
+```
+
+---
+
+# Lebanon UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Lebanon`
+```
+
+---
+
+# Lebanon UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Lebanon`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Lyons in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Lyons`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Lyons") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Lyons UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Lyons`
+```
+
+---
+
+# Lyons UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Lyons`
+```
+
+---
+
+# Lyons UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Lyons`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Mill City in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Mill City`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Mill City") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Mill City UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Mill City`
+```
+
+---
+
+# Mill City UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Mill City`
+```
+
+---
+
+# Mill City UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Mill City`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Millersburg in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Millersburg`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Millersburg") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Millersburg UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Millersburg`
+```
+
+---
+
+# Millersburg UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Millersburg`
+```
+
+---
+
+# Millersburg UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Millersburg`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Scio in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Scio`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Scio") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Scio UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Scio`
+```
+
+---
+
+# Scio UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Scio`
+```
+
+---
+
+# Scio UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Scio`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Sodaville in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Sodaville`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Sodaville") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Sodaville UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Sodaville`
+```
+
+---
+
+# Sodaville UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Sodaville`
+```
+
+---
+
+# Sodaville UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Sodaville`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Sweet Home in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Sweet Home`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Sweet Home") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Sweet Home UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Sweet Home`
+```
+
+---
+
+# Sweet Home UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Sweet Home`
+```
+
+---
+
+# Sweet Home UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Sweet Home`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Tangent in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Tangent`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Tangent") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Tangent UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Tangent`
+```
+
+---
+
+# Tangent UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Tangent`
+```
+
+---
+
+# Tangent UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Tangent`
+```
+
+---
+
+class: city
+
+# Linn UGBs: Waterloo in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Waterloo`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Waterloo") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Linn County: Waterloo UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Waterloo`
+```
+
+---
+
+# Waterloo UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Waterloo`
+```
+
+---
+
+# Waterloo UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Waterloo`
+```
+
+---
+
+
+class: center
+
+# Comments or Questions?
+
+## Contact PSUPRC
+Email: [askprc@pdx.edu](mailto:askprc@pdx.edu)  
+Telephone: 503-725-3922
+
+
+## Preliminary Population Projections
+https://www.pdx.edu/population-research/population-forecasts
+

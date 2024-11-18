@@ -1,0 +1,641 @@
+---
+title: "Oregon Population Forecast Program"
+subtitle: "Preliminary Forecasts for Counties & UGBs"
+author: "Lincoln County"
+institute: "Portland State University Population Research Center"
+date: "November 2024"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+class: center
+
+# Comments or Questions?
+
+## Contact PSUPRC
+Email: [askprc@pdx.edu](mailto:askprc@pdx.edu)  
+Telephone: 503-725-3922
+
+
+## Preliminary Population Projections
+https://www.pdx.edu/population-research/population-forecasts
+
+---
+
+class: center
+
+# PSUPRC Project Team
+
+.pull-left[
+
+**Huda Alkitkat, PhD.**  
+*Population Estimates Manager*
+
+**Seth Dowden**  
+*Research Assistant*
+
+**Neal Marquez, PhD.**  
+*Population Forecast Manager*
+
+**Gilbert Montcho, PhD.**  
+*Demographic & Labor Econ Analyst*
+
+**Scott Nordstrom, PhD.**  
+*Post-Doctoral Researcher*
+]
+
+.pull-right[
+**Ethan Sharygin, PhD.**  
+*Director*
+
+**Aja Sutton, PhD.**  
+*Post-Doctoral Researcher*
+
+**David Swanson, PhD.**  
+*Research Associate*
+
+**Suniva Thangaraj**  
+*Program Manager*
+
+**Joshua Wilde, PhD.**  
+*Research Scientist*
+]
+
+---
+
+# Lincoln County Outline
+
+- Population Overview
+- Total Population
+- Births
+- Deaths
+- Migration
+- Aging
+- Race & Ethnicity
+- UGB Forecasts
+
+---
+
+# Lincoln at a Glance: 2020 Census
+
+``` {css, echo =F} 
+    .pulll-left {
+      float: left;
+      width: 20%;
+    }
+
+    .pulll-right {
+      float: right;
+     width: 68%;
+   }
+```
+
+``` {css, echo =F} 
+    .pux-left {
+      float: left;
+      width: 38%;
+    }
+
+    .pux-right {
+      float: right;
+     width: 58%;
+   }
+```
+
+```{css, echo = F}
+.city table {
+  font-size: 14px;     
+}
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(plotly)
+focus_county <- "Lincoln"
+model <- "model_22"
+model_ugb <- "model_22a_constrained"
+
+county_plots <- "../../../../model_plots/plots_" %>%
+    str_c(model, ".rds") %>%
+    read_rds()
+ugb_plots <- "../../../../model_plots/ugb_plots_" %>%
+    str_c(model_ugb, ".rds") %>%
+    read_rds()
+map_list <- "../../../../maps/ugb_city_compare_html/" %>% 
+    str_c(focus_county, ".rds") %>%
+    read_rds()
+sector_plots <-  "../../../../processing_plots/sector_trends/sector_plots.rds" %>% 
+    read_rds()
+mig_plots <- "../../../../processing_plots/county_migration/" %>%
+    str_c("county_migration.rds") %>%
+    read_rds()
+
+source("../../../../../Utilities/00_common_functions.R")
+
+null0 <- capture.output(place_stat_df <- read_hist_data(
+    county = FALSE, adjust_for_inflation = TRUE) %>%
+    left_join(
+        distinct(read_csv(ugb_cw_file), COUNTYID, CITYID, COUNTY, UGB),
+        by = "CITYID", relationship = "many-to-many") %>% 
+    filter(COUNTY == focus_county & UGB != "Metro") %>%
+    filter(YEAR %in% c(1980, 2000, 2020)) %>%
+    select(CITY, POP = POPULATION, HU, OVER65, OCC, EMPRATE, PPH, MHI, YEAR) %>%
+    mutate(OVER65 = OVER65/POP*100, OCC = OCC/HU*100, EMPRATE = EMPRATE*100) %>%
+    mutate(across(OVER65:PPH, function(x)sprintf("%.2f", x))) %>%
+    mutate(across(POP:HU, function(x)prettyNum(x, ","))) %>%
+    mutate(OVER65 = str_c(OVER65, "%")) %>%
+    mutate(OCC = str_c(OCC, "%")) %>%
+    mutate(EMPRATE = str_c(EMPRATE, "%")) %>%
+    mutate(MHI = str_c("$", prettyNum(round(MHI), ","))) %>%
+    select(
+        CITY, YEAR, `Pop 65+` = OVER65, `Housing Units` = HU,
+        `Housing Occupancy` = OCC, `Persons Per Household` = PPH,
+        `Household Income` = MHI, `Employment Rate` = EMPRATE) %>%
+    pivot_longer(-(CITY:YEAR)) %>%
+    pivot_wider(names_from = YEAR) %>%
+    rename(Metric = name))
+
+cen_demog_df <- read_hist_data(OR_only = TRUE, adjust_for_inflation = FALSE)
+cen_demog_df %>%
+    select(-EMPRATE) %>%
+    group_by(YEAR) %>%
+    summarise(across(POPULATION:UNDER18, sum), .groups = "drop") %>%
+    mutate(COUNTY = "Oregon") %>%
+    bind_rows(cen_demog_df) %>%
+    mutate(UNDER18 = round(UNDER18/POPULATION*100, 2)) %>%
+    mutate(UNDER18 = str_c(sprintf("%.02f", UNDER18), "%")) %>%
+    mutate(OVER65 = round(OVER65/POPULATION*100, 2)) %>%
+    mutate(OVER65 = str_c(sprintf("%.02f", OVER65), "%")) %>%
+    mutate(NONWHITE = round((1-(WHITE/POPULATION))*100, 2)) %>%
+    mutate(NONWHITE = str_c(sprintf("%.02f", NONWHITE), "%")) %>%
+    mutate(PPH = round(((POPULATION - GQ)/OCC), 2)) %>%
+    mutate(PPH = str_c(
+        sprintf("%.02f", PPH), " (",
+        prettyNum(HU, big.mark = ","), " units)")) %>%
+    mutate(POPULATION = prettyNum(POPULATION, big.mark = ",")) %>%
+    filter(YEAR == 2020, COUNTY %in% c("Oregon", focus_county)) %>%
+    select(
+        COUNTY,
+        `Total Population` = POPULATION,
+        `Population Aged 0-17` = UNDER18,
+        `Population Aged 65+` = OVER65,
+        `Population non-White` = NONWHITE,
+        `Persons per Household` = PPH) %>%
+    mutate(COUNTY = fct_rev(fct_relevel(COUNTY, "Oregon"))) %>%
+    arrange(COUNTY) %>%
+    pivot_longer(-COUNTY, names_to = "Statistic") %>%
+    pivot_wider(names_from = COUNTY, values_from = value) %>%
+    knitr::kable(format = 'html')
+    
+```
+
+---
+
+# Lincoln Employment Changes
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(sector_plots[[focus_county]], tooltip = "text")
+```
+
+---
+
+# Lincoln Migration Flows
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(mig_plots[[focus_county]], tooltip = "text")
+```
+
+---
+
+# Lincoln Population
+
+.pulll-left[
+The population of Lincoln county is expected to grow in the short term before stabilizing, around the year 2040.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$county_pop[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Lincoln Compositional Changes
+
+.pulll-left[
+The impact of negative natural change is expected to increase in the coming years, offsetting growth from migration. 
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$comp_change[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Lincoln Births
+
+.pulll-left[
+While the birth rate is currently high for Lincoln County, the count of births is expected to continue to decline in the coming years.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$births[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Lincoln Deaths
+
+.pulll-left[
+Though life expectancy is increasing, deaths are expected to increase as the population ages. 
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$deaths[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Lincoln Life Expectancy & TFR
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px", dpi=300}
+county_plots$sum_plots[[focus_county]]
+```
+
+---
+
+# Population Pyramids
+
+.pulll-left[
+The share of the population who is aged 65 and older will continue to increase over time, reaching 40% by 2050. 
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$age_structure[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Lincoln Race and Ethnicity
+
+.pulll-left[
+The White population is expected to decline in the coming years, as population aging continues to occur.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$raceN[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Lincoln UGB Population Changes
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px", out.width="700px"}
+ggplotly(ugb_plots$group_ugb[[focus_county]], tooltip = "text")
+```
+
+---
+
+class: city
+
+# Lincoln UGBs: Depoe Bay in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Depoe Bay`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Depoe Bay") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Lincoln County: Depoe Bay UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Depoe Bay`
+```
+
+---
+
+# Depoe Bay UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Depoe Bay`
+```
+
+---
+
+# Depoe Bay UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Depoe Bay`
+```
+
+---
+
+class: city
+
+# Lincoln UGBs: Lincoln City in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Lincoln City`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Lincoln City") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Lincoln County: Lincoln City UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Lincoln City`
+```
+
+---
+
+# Lincoln City UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Lincoln City`
+```
+
+---
+
+# Lincoln City UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Lincoln City`
+```
+
+---
+
+class: city
+
+# Lincoln UGBs: Newport in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Newport`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Newport") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Lincoln County: Newport UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Newport`
+```
+
+---
+
+# Newport UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Newport`
+```
+
+---
+
+# Newport UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Newport`
+```
+
+---
+
+class: city
+
+# Lincoln UGBs: Siletz in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Siletz`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Siletz") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Lincoln County: Siletz UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Siletz`
+```
+
+---
+
+# Siletz UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Siletz`
+```
+
+---
+
+# Siletz UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Siletz`
+```
+
+---
+
+class: city
+
+# Lincoln UGBs: Toledo in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Toledo`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Toledo") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Lincoln County: Toledo UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Toledo`
+```
+
+---
+
+# Toledo UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Toledo`
+```
+
+---
+
+# Toledo UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Toledo`
+```
+
+---
+
+class: city
+
+# Lincoln UGBs: Waldport in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Waldport`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Waldport") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Lincoln County: Waldport UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Waldport`
+```
+
+---
+
+# Waldport UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Waldport`
+```
+
+---
+
+# Waldport UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Waldport`
+```
+
+---
+
+class: city
+
+# Lincoln UGBs: Yachats in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Yachats`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Yachats") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Lincoln County: Yachats UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Yachats`
+```
+
+---
+
+# Yachats UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Yachats`
+```
+
+---
+
+# Yachats UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Yachats`
+```
+
+---
+
+
+class: center
+
+# Comments or Questions?
+
+## Contact PSUPRC
+Email: [askprc@pdx.edu](mailto:askprc@pdx.edu)  
+Telephone: 503-725-3922
+
+
+## Preliminary Population Projections
+https://www.pdx.edu/population-research/population-forecasts

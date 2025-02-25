@@ -1,9 +1,9 @@
 ---
 title: "Oregon Population Forecast Program"
-subtitle: "Preliminary Forecasts for Counties & UGBs"
+subtitle: "Proposal Forecasts for Counties & UGBs"
 author: "Linn County"
 institute: "Portland State University Population Research Center"
-date: "November 2024"
+date: "February 2025"
 output:
   xaringan::moon_reader:
     lib_dir: libs
@@ -70,18 +70,10 @@ class: center
 
 # Linn County Outline
 
-- Population Overview
-- Total Population
-- Births
-- Deaths
-- Migration
-- Aging
-- Race & Ethnicity
+- Introduction
+- Updates
+- County Overview
 - UGB Forecasts
-
----
-
-# Linn at a Glance: 2020 Census
 
 ``` {css, echo =F} 
     .pulll-left {
@@ -107,6 +99,18 @@ class: center
    }
 ```
 
+``` {css, echo =F} 
+    .puz-left {
+      float: left;
+      width: 58%;
+    }
+
+    .puz-right {
+      float: right;
+     width: 38%;
+   }
+```
+
 ```{css, echo = F}
 .city table {
   font-size: 14px;     
@@ -117,8 +121,8 @@ class: center
 library(tidyverse)
 library(plotly)
 focus_county <- "Linn"
-model <- "model_22"
-model_ugb <- "model_22a_constrained"
+model <- "model_23"
+model_ugb <- "model_23a_constrained"
 
 county_plots <- "../../../../model_plots/plots_" %>%
     str_c(model, ".rds") %>%
@@ -134,6 +138,13 @@ sector_plots <-  "../../../../processing_plots/sector_trends/sector_plots.rds" %
 mig_plots <- "../../../../processing_plots/county_migration/" %>%
     str_c("county_migration.rds") %>%
     read_rds()
+county_est_plots <- read_rds(
+    "../../../../processing_plots/estimates/county_est.rds")
+city_est_plots <- read_rds(
+    "../../../../processing_plots/estimates/city_est.rds")
+hu_est_plots <- read_rds(
+    "../../../../processing_plots/estimates/hu_est.rds"
+)
 
 source("../../../../../Utilities/00_common_functions.R")
 
@@ -161,6 +172,136 @@ null0 <- capture.output(place_stat_df <- read_hist_data(
     rename(Metric = name))
 
 cen_demog_df <- read_hist_data(OR_only = TRUE, adjust_for_inflation = FALSE)
+    
+```
+
+---
+
+# PSUPRC OPFP Population Forecasts
+
+.puz-left[
+- For the purposes of land use planning PSUPRC generates population forecasts
+- For counties, urban growth boundaries (UGBs), and areas outside UGBs
+- These forecasts must
+    - Be updated at least every four years
+    - Cover a 50 year forecast horizon
+    - Include most up to date data
+    - Allow for public input/objections
+    - Methods & results publicly available
+
+]
+
+.puz-right[
+![Oregon Seal](https://sos.oregon.gov/PublishingImages/Oregon-State-Seal-Navy-Gold.png)
+]
+
+---
+# Oregon Population Forecast Program Cycle
+
+![Program Cycle](program_cycle.png)
+
+---
+# Methods Review: Cohort Component Method
+
+.pux-left[
+- For Counties
+- Births = Females 15-50 * Birth Rate
+  - Both number of and rate of births in OR decreasing
+- Deaths = All Population * Death Rate
+  - While number of deaths are increasing rate of deaths decreasing
+- Migration = Past migration events
+  - Average of past migration is most likely scenario moving forward
+
+]
+
+.pux-right[
+![CCM](./ccm_diagram.png)
+]
+
+---
+# Methods Review: Housing Unit Method
+
+.pull-left[
+- For UGBs
+- $P_t = P_{t-1} + \Delta HU*PPH*OCC$
+- $PPH$: Persons per household
+  - Estimated from most recent census data
+- $OCC$: Occupancy Rate
+  - Estimated from most recent census data
+- $\Delta HU$: annual change in housing units
+  - Modeled based on past housing unit growth trends
+
+]
+
+.pull-right[
+![CCM](./housing_const.avif)
+]
+
+---
+# After this meeting
+
+- Email for further follow up  
+- March 15, 2025 forecast discussion period ends
+- Chance to formally appeal until May 5, 2025
+  - Will review appeals in the following week
+- No further changes will be made after May 15, 2025
+- Reports and data tables will be available June 15, 2025
+
+
+---
+class: center, middle, inverse
+
+# Updates
+
+---
+# Survey and Preliminary Meeting Feedback
+
+- Received housing and general survey responses from over 20 organizations
+- Updated GIS UGB boundary lines 
+- Account for large public works alter housing development trajectories
+- Incorporate group quarter expansions
+- Adjusted housing unit productions
+- Housing build moratoriums
+- General concerns
+  - Restrictions on development  
+  - Access to others responses
+  
+---
+# Incoporation of 2024 Certified Estimates  
+
+![Estimates](./pop_est_page.png)
+
+---
+# Agreement from US Census Bureau Concerning Oregon's Growth
+
+![Oregonion](./oregonian.png)
+
+---
+
+# Fertility Changes
+
+![Oregonion](./birth_story.png)
+
+---
+
+# Life Expectancy Changes
+
+![lex](./lex_recent.png)
+
+# Housing Developments
+
+![housing](./housing_news.png)
+
+---
+class: center, middle, inverse
+
+# Linn County Forecast
+
+---
+# Linn County at a Glance
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+
 cen_demog_df %>%
     select(-EMPRATE) %>%
     group_by(YEAR) %>%
@@ -191,8 +332,18 @@ cen_demog_df %>%
     pivot_longer(-COUNTY, names_to = "Statistic") %>%
     pivot_wider(names_from = COUNTY, values_from = value) %>%
     knitr::kable(format = 'html')
-    
 ```
+
+---
+
+# Linn County Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+
+ggplotly(county_est_plots[[focus_county]], tooltip = "text")
+```
+
 
 ---
 
@@ -215,7 +366,7 @@ ggplotly(mig_plots[[focus_county]], tooltip = "text")
 # Linn Population
 
 .pulll-left[
-Linn's population is expected to grow nearly keeping trak with previous projections. 
+We project that Linn's population will continue to grow, albeit at a slower rate than what has been observed in the past.
 ]
 
 .pulll-right[
@@ -229,7 +380,7 @@ ggplotly(county_plots$county_pop[[focus_county]], tooltip = "text")
 # Linn Compositional Changes
 
 .pulll-left[
-The impact of negative natural change is expected to increase in the coming years, offsetting growth from migration. 
+Historically, population growth has come from natural change and net migration. In the future it will be driven solely by net migration.
 ]
 
 .pulll-right[
@@ -243,7 +394,7 @@ ggplotly(county_plots$comp_change[[focus_county]], tooltip = "text")
 # Linn Births
 
 .pulll-left[
-Births are expected to decline modestly in the coming years as TFR declines and the population grows.
+Birth numbers are low for Linn County, and will continue to decline in the future as fertilty rates decrease.
 ]
 
 .pulll-right[
@@ -257,7 +408,7 @@ ggplotly(county_plots$births[[focus_county]], tooltip = "text")
 # Linn Deaths
 
 .pulll-left[
-Deaths are expected to increase over time as the population ages.
+Deaths in Linn County will increase as the population ages.
 ]
 
 .pulll-right[
@@ -279,7 +430,7 @@ county_plots$sum_plots[[focus_county]]
 # Population Pyramids
 
 .pulll-left[
-The population is expected to continue to age becoming more "top heavy" over time.
+Linn's population age structure will continue to be heavily influenced by the college age population. 
 ]
 
 .pulll-right[
@@ -293,7 +444,7 @@ ggplotly(county_plots$age_structure[[focus_county]], tooltip = "text")
 # Linn Race and Ethnicity
 
 .pulll-left[
-Linn's non-White population will continue to grow at a faster rate compared to the White population.
+Linn's non-White population will continue to grow more quickly than the White population.
 ]
 
 .pulll-right[
@@ -304,15 +455,18 @@ ggplotly(county_plots$raceN[[focus_county]], tooltip = "text")
 
 ---
 
-
 # Linn UGB Population Changes
 
-```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px", out.width="700px"}
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="850px", dpi=300}
 ggplotly(ugb_plots$group_ugb[[focus_county]], tooltip = "text")
 ```
 
 ---
+class: center, middle, inverse
 
+# Linn UGB Forecasts
+
+---
 class: city
 
 # Linn UGBs: Albany in Context
@@ -331,7 +485,18 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Albany Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(city_est_plots[[focus_county]][["Albany"]], tooltip = "text")
+```
+---
+# Albany Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(hu_est_plots[[focus_county]][["Albany"]], tooltip = "text")
+```
 ---
 
 # Linn County: Albany UGB Boundaries
@@ -376,7 +541,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Brownsville Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Brownsville"]], tooltip = "text")
+```
+---
+# Brownsville Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Brownsville"]], tooltip = "text")
+```
 ---
 
 # Linn County: Brownsville UGB Boundaries
@@ -421,7 +599,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Gates Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Gates"]], tooltip = "text")
+```
+---
+# Gates Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Gates"]], tooltip = "text")
+```
 ---
 
 # Linn County: Gates UGB Boundaries
@@ -466,7 +657,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Halsey Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Halsey"]], tooltip = "text")
+```
+---
+# Halsey Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Halsey"]], tooltip = "text")
+```
 ---
 
 # Linn County: Halsey UGB Boundaries
@@ -511,7 +715,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Harrisburg Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Harrisburg"]], tooltip = "text")
+```
+---
+# Harrisburg Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Harrisburg"]], tooltip = "text")
+```
 ---
 
 # Linn County: Harrisburg UGB Boundaries
@@ -556,7 +773,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Idanha Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Idanha"]], tooltip = "text")
+```
+---
+# Idanha Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Idanha"]], tooltip = "text")
+```
 ---
 
 # Linn County: Idanha UGB Boundaries
@@ -601,7 +831,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Lebanon Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Lebanon"]], tooltip = "text")
+```
+---
+# Lebanon Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Lebanon"]], tooltip = "text")
+```
 ---
 
 # Linn County: Lebanon UGB Boundaries
@@ -646,7 +889,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Lyons Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Lyons"]], tooltip = "text")
+```
+---
+# Lyons Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Lyons"]], tooltip = "text")
+```
 ---
 
 # Linn County: Lyons UGB Boundaries
@@ -691,7 +947,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Mill City Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Mill City"]], tooltip = "text")
+```
+---
+# Mill City Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Mill City"]], tooltip = "text")
+```
 ---
 
 # Linn County: Mill City UGB Boundaries
@@ -736,6 +1005,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Millersburg Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Millersburg"]], tooltip = "text")
+```
+---
+# Millersburg Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Millersburg"]], tooltip = "text")
+```
 
 ---
 
@@ -781,7 +1064,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Scio Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Scio"]], tooltip = "text")
+```
+---
+# Scio Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Scio"]], tooltip = "text")
+```
 ---
 
 # Linn County: Scio UGB Boundaries
@@ -826,7 +1122,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Sodaville Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Sodaville"]], tooltip = "text")
+```
+---
+# Sodaville Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Sodaville"]], tooltip = "text")
+```
 ---
 
 # Linn County: Sodaville UGB Boundaries
@@ -871,7 +1180,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Sweet Home Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Sweet Home"]], tooltip = "text")
+```
+---
+# Sweet Home Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Sweet Home"]], tooltip = "text")
+```
 ---
 
 # Linn County: Sweet Home UGB Boundaries
@@ -916,7 +1238,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Tangent Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Tangent"]], tooltip = "text")
+```
+---
+# Tangent Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Tangent"]], tooltip = "text")
+```
 ---
 
 # Linn County: Tangent UGB Boundaries
@@ -961,7 +1296,20 @@ place_stat_df %>%
     knitr::kable(format = "html")
 ```
 ]
+---
+# Waterloo Beyond the Census
 
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(city_est_plots[[focus_county]][["Waterloo"]], tooltip = "text")
+```
+---
+# Waterloo Beyond the Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+
+ggplotly(hu_est_plots[[focus_county]][["Waterloo"]], tooltip = "text")
+```
 ---
 
 # Linn County: Waterloo UGB Boundaries
@@ -985,10 +1333,7 @@ ugb_plots$ind_ugb_plot[[focus_county]]$`Waterloo`
 ```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
 ugb_plots$gr_compare[[focus_county]]$`Waterloo`
 ```
-
 ---
-
-
 class: center
 
 # Comments or Questions?
@@ -1000,4 +1345,5 @@ Telephone: 503-725-3922
 
 ## Preliminary Population Projections
 https://www.pdx.edu/population-research/population-forecasts
+
 

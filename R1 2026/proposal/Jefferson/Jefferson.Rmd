@@ -1,7 +1,7 @@
 ---
 title: "Oregon Population Forecast Program"
 subtitle: "Proposal Forecasts for Counties & UGBs"
-author: "Harney County"
+author: "Jefferson County"
 institute: "Portland State University Population Research Center"
 date: "March 2026"
 output:
@@ -68,7 +68,7 @@ class: center
 
 ---
 
-# Harney County Outline
+# Jefferson County Outline
 
 - Introduction
 - Updates
@@ -237,30 +237,27 @@ class: center, middle, inverse
 ![housing](./dom_mobility.png)
 
 ---
+
 class: center, middle, inverse
 
-# Harney County
+# Jefferson County
 
 ---
 # Summary of Considerations
 
-- Population growth had been declining
-- Now remained stable since 2020
-- This stabilizing is despite natural decline
-- Steady increases in migration
-- New subdivisions in UGBs to accommodate new population
-- County now expected to remain stable in it's population
-- UGBs not absorbing population as in 2022 forecast
+- Population growth is slowing
+- Natural change has been on the decline
+- Net migration is still healthy
+- No changes made since December
 
 ---
 
-
-# Harney at a Glance: 2020 Census
+# Jefferson at a Glance: 2020 Census
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(plotly)
-focus_county <- "Harney"
+focus_county <- "Jefferson"
 model <- "model_41"
 model_ugb <- "model_41a_constrained"
 
@@ -340,7 +337,7 @@ cen_demog_df %>%
 
 ---
 
-# Harney Employment Changes
+# Jefferson Employment Changes
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
 ggplotly(sector_plots[[focus_county]], tooltip = "text")
@@ -348,7 +345,7 @@ ggplotly(sector_plots[[focus_county]], tooltip = "text")
 
 ---
 
-# Harney Migration Flows
+# Jefferson Migration Flows
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
 ggplotly(mig_plots[[focus_county]], tooltip = "text")
@@ -356,10 +353,10 @@ ggplotly(mig_plots[[focus_county]], tooltip = "text")
 
 ---
 
-# Harney Population
+# Jefferson Population
 
 .pulll-left[
-Harney's population has been on the decline but is expected to stabilize moving forward.
+Jefferson county is expected to growth in the forecast period, albeit at a slower rate then previously observed.
 ]
 
 .pulll-right[
@@ -370,10 +367,10 @@ ggplotly(county_plots$county_pop[[focus_county]], tooltip = "text")
 
 ---
 
-# Harney Compositional Changes
+# Jefferson Compositional Changes
 
 .pulll-left[
-Natural change has sharply fallen and net migration will need to increase to stabilize the population.
+Natural change has been on the decline leading to slower population growth.
 ]
 
 .pulll-right[
@@ -384,10 +381,10 @@ ggplotly(county_plots$comp_change[[focus_county]], tooltip = "text")
 
 ---
 
-# Harney Births
+# Jefferson Births
 
 .pulll-left[
-Births have steadily declined but are expected to level off in the forecast period.
+Births have been on the decline, a trend that is expected to continue through teh forecast period.
 ]
 
 .pulll-right[
@@ -398,10 +395,10 @@ ggplotly(county_plots$births[[focus_county]], tooltip = "text")
 
 ---
 
-# Harney Deaths
+# Jefferson Deaths
 
 .pulll-left[
-Deaths in the county have continued to increase as the population has aged over time.
+Deaths are expected to increase as the population ages.
 ]
 
 .pulll-right[
@@ -412,7 +409,7 @@ ggplotly(county_plots$deaths[[focus_county]], tooltip = "text")
 
 ---
 
-# Harney Life Expectancy & TFR
+# Jefferson Life Expectancy & TFR
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px", dpi=300}
 county_plots$sum_plots[[focus_county]]
@@ -423,7 +420,7 @@ county_plots$sum_plots[[focus_county]]
 # Population Pyramids
 
 .pulll-left[
-The population aged 65 and older has continued to grown while out migration of young populations creates a "top heavy" population structure.
+Jefferson county is expected to continue to age, leading to a "top-heavy" population structure.
 ]
 
 .pulll-right[
@@ -434,10 +431,10 @@ ggplotly(county_plots$age_structure[[focus_county]], tooltip = "text")
 
 ---
 
-# Harney Race and Ethnicity
+# Jefferson Race and Ethnicity
 
 .pulll-left[
-Most population decline has been observed in the White population, while the AIAN population remains stable and the Hispanic population slowly grows.
+The population is expected to continue to diversify, with strong growth seen among the Hispanic population.
 ]
 
 .pulll-right[
@@ -449,7 +446,7 @@ ggplotly(county_plots$raceN[[focus_county]], tooltip = "text")
 ---
 
 
-# Harney UGB Population Changes
+# Jefferson UGB Population Changes
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="850px", dpi=300}
 ugb_plots$group_ugb[[focus_county]]
@@ -459,18 +456,18 @@ ugb_plots$group_ugb[[focus_county]]
 
 class: city
 
-# Harney UGBs: Burns in Context
+# Jefferson UGBs: Culver in Context
 
 .pux-right[
 ```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
-ugb_plots$hist_pop_house_plot[[focus_county]]$`Burns`
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Culver`
 ```
 ]
 
 .pux-left[
 ```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
 place_stat_df %>% 
-    filter(CITY == "Burns") %>%
+    filter(CITY == "Culver") %>%
     select(-CITY) %>%
     knitr::kable(format = "html")
 ```
@@ -478,44 +475,44 @@ place_stat_df %>%
 
 ---
 
-# Harney County: Burns UGB Boundaries
+# Jefferson County: Culver UGB Boundaries
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
-map_list$`Burns`
+map_list$`Culver`
 ```
 
 ---
 
-# Burns UGB Pop Forecast
+# Culver UGB Pop Forecast
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
-ugb_plots$ind_ugb_plot[[focus_county]]$`Burns`
+ugb_plots$ind_ugb_plot[[focus_county]]$`Culver`
 ```
 
 ---
 
-# Burns UGB Pop Forecast
+# Culver UGB Pop Forecast
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
-ugb_plots$gr_compare[[focus_county]]$`Burns`
+ugb_plots$gr_compare[[focus_county]]$`Culver`
 ```
 
 ---
 
 class: city
 
-# Harney UGBs: Hines in Context
+# Jefferson UGBs: Madras in Context
 
 .pux-right[
 ```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
-ugb_plots$hist_pop_house_plot[[focus_county]]$`Hines`
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Madras`
 ```
 ]
 
 .pux-left[
 ```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
 place_stat_df %>% 
-    filter(CITY == "Hines") %>%
+    filter(CITY == "Madras") %>%
     select(-CITY) %>%
     knitr::kable(format = "html")
 ```
@@ -523,26 +520,71 @@ place_stat_df %>%
 
 ---
 
-# Harney County: Hines UGB Boundaries
+# Jefferson County: Madras UGB Boundaries
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
-map_list$`Hines`
+map_list$`Madras`
 ```
 
 ---
 
-# Hines UGB Pop Forecast
+# Madras UGB Pop Forecast
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
-ugb_plots$ind_ugb_plot[[focus_county]]$`Hines`
+ugb_plots$ind_ugb_plot[[focus_county]]$`Madras`
 ```
 
 ---
 
-# Hines UGB Pop Forecast
+# Madras UGB Pop Forecast
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
-ugb_plots$gr_compare[[focus_county]]$`Hines`
+ugb_plots$gr_compare[[focus_county]]$`Madras`
+```
+
+---
+
+class: city
+
+# Jefferson UGBs: Metolius in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Metolius`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Metolius") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jefferson County: Metolius UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Metolius`
+```
+
+---
+
+# Metolius UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Metolius`
+```
+
+---
+
+# Metolius UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Metolius`
 ```
 
 ---

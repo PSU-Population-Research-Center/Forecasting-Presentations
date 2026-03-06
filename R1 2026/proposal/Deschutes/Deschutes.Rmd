@@ -1,6 +1,6 @@
 ---
 title: "Oregon Population Forecast Program"
-subtitle: "Preliminary Forecasts for Counties & UGBs"
+subtitle: "Proposal Forecasts for Counties & UGBs"
 author: "Deschutes County"
 institute: "Portland State University Population Research Center"
 date: "March 2026"
@@ -22,7 +22,7 @@ Email: [askprc@pdx.edu](mailto:askprc@pdx.edu)
 Telephone: 503-725-3922
 
 
-## Preliminary Population Projections
+## Proposal Population Projections
 https://www.pdx.edu/population-research/population-forecasts
 
 ---

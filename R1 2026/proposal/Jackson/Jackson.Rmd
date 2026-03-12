@@ -1,0 +1,967 @@
+---
+title: "Oregon Population Forecast Program"
+subtitle: "Proposal Forecasts for Counties & UGBs"
+author: "Jackson County"
+institute: "Portland State University Population Research Center"
+date: "March 2026"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+class: center
+
+# Comments or Questions?
+
+## Contact PSUPRC
+Email: [askprc@pdx.edu](mailto:askprc@pdx.edu)  
+Telephone: 503-725-3922
+
+
+## Proposal Population Projections
+https://www.pdx.edu/population-research/population-forecasts
+
+---
+
+class: center
+
+# PSUPRC Project Team
+
+.pull-left[
+
+**Huda Alkitkat, PhD.**  
+*Population Estimates Manager*
+
+**Seth Dowden**  
+*Research Assistant*
+
+**Neal Marquez, PhD.**  
+*Population Forecast Manager*
+
+**Gilbert Montcho, PhD.**  
+*Demographic & Labor Econ Analyst*
+
+**Scott Nordstrom, PhD.**  
+*Post-Doctoral Researcher*
+]
+
+.pull-right[
+**Ethan Sharygin, PhD.**  
+*Director*
+
+**Aja Sutton, PhD.**  
+*Post-Doctoral Researcher*
+
+**David Swanson, PhD.**  
+*Research Associate*
+
+**Suniva Thangaraj**  
+*Program Manager*
+
+**Joshua Wilde, PhD.**  
+*Research Scientist*
+]
+
+---
+
+# Jackson County Outline
+
+- Introduction
+- Updates
+- County Overview
+- UGB Forecasts
+
+``` {css, echo =F} 
+    .pulll-left {
+      float: left;
+      width: 20%;
+    }
+
+    .pulll-right {
+      float: right;
+     width: 68%;
+   }
+```
+
+``` {css, echo =F} 
+    .pux-left {
+      float: left;
+      width: 38%;
+    }
+
+    .pux-right {
+      float: right;
+     width: 58%;
+   }
+```
+
+``` {css, echo =F} 
+    .puz-left {
+      float: left;
+      width: 58%;
+    }
+
+    .puz-right {
+      float: right;
+     width: 38%;
+   }
+```
+
+```{css, echo = F}
+.city table {
+  font-size: 14px;     
+}
+```
+
+---
+
+# PSUPRC OPFP Population Forecasts
+
+.puz-left[
+- For the purposes of land use planning PSUPRC generates population forecasts
+- For counties, urban growth boundaries (UGBs), and areas outside UGBs
+- These forecasts must
+    - Be updated at least every four years
+    - Cover a 50 year forecast horizon
+    - Include most up to date data
+    - Allow for public input/objections
+    - Methods & results publicly available
+
+]
+
+.puz-right[
+![Oregon Seal](https://sos.oregon.gov/PublishingImages/Oregon-State-Seal-Navy-Gold.png)
+]
+
+---
+# Oregon Population Forecast Program Cycle
+
+![Program Cycle](program_cycle.png)
+
+---
+# Methods Review: Cohort Component Method
+
+.pux-left[
+- For Counties
+- Births = Females 15-50 * Birth Rate
+  - Both number of and rate of births in OR decreasing
+- Deaths = All Population * Death Rate
+  - While number of deaths are increasing rate of deaths decreasing
+- Migration = Past migration events
+  - Average of past migration is most likely scenario moving forward
+
+]
+
+.pux-right[
+![CCM](./ccm_diagram.png)
+]
+
+---
+# Methods Review: Housing Unit Method
+
+.pull-left[
+- For UGBs
+- $P_t = P_{t-1} + \Delta HU*PPH*OCC$
+- $PPH$: Persons per household
+  - Estimated from most recent census data
+- $OCC$: Occupancy Rate
+  - Estimated from most recent census data
+- $\Delta HU$: annual change in housing units
+  - Modeled based on past housing unit growth trends
+
+]
+
+.pull-right[
+![CCM](./housing_const.avif)
+]
+
+---
+# After this meeting
+
+- Email for further follow up  
+- March 30, 2026 forecast discussion period ends
+- Chance to formally appeal until May 15, 2026
+  - Will review appeals in the following week
+- No further changes will be made after May 22, 2026
+- Reports and data tables will be available June 15, 2026
+
+
+---
+class: center, middle, inverse
+
+# Updates
+
+---
+# Survey and Preliminary Meeting Feedback
+
+- Received housing and general survey responses from over 20 organizations
+- Updated GIS UGB boundary lines 
+- Account for large public works alter housing development trajectories
+- Incorporate group quarter expansions
+- Adjusted housing unit productions
+- Housing build moratoriums
+- General concerns
+  - Restrictions on development  
+  - Access to others responses
+  
+---
+# Incoporation of 2025 Certified Estimates  
+
+![Estimates](./pop_est_page.png)
+
+---
+# Slowing Growth Across the State
+
+![Oregonion](./opb_pop_growth_slow.png)
+
+---
+
+# Changes in Vital Trends
+
+![Oregonion](./births_and_deaths.png)
+
+---
+
+# International Migration
+
+![lex](./inter_mig.png)
+
+---
+
+# Domestic Mobility
+
+![housing](./dom_mobility.png)
+
+---
+class: center, middle, inverse
+
+# Jackson County
+
+---
+# Summary of Considerations
+
+- Population growth has been consistent
+- County growth greatly impacted by fire
+- Most municipal areas unaffected 
+- Large impacts in areas outside of UGBs
+- Comments and last forecasts reflect this
+
+
+---
+
+# Jackson at a Glance: 2020 Census
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(plotly)
+focus_county <- "Jackson"
+model <- "model_41"
+model_ugb <- "model_41a_constrained"
+
+county_plots <- "../../../../model_plots/plots_" %>%
+    str_c(model, ".rds") %>%
+    read_rds()
+ugb_plots <- "../../../../model_plots/ugb_plots_" %>%
+    str_c(model_ugb, ".rds") %>%
+    read_rds()
+map_list <- "../../../../maps/ugb_city_compare_html/" %>% 
+    str_c(focus_county, ".rds") %>%
+    read_rds()
+sector_plots <-  "../../../../processing_plots/sector_trends/sector_plots.rds" %>% 
+    read_rds()
+mig_plots <- "../../../../processing_plots/county_migration/" %>%
+    str_c("county_migration.rds") %>%
+    read_rds()
+
+source("../../../../../Utilities/00_common_functions.R")
+
+null0 <- capture.output(place_stat_df <- read_hist_data(
+    county = FALSE, adjust_for_inflation = FALSE) %>%
+    left_join(
+        distinct(read_csv(ugb_cw_file), COUNTYID, CITYID, COUNTY, UGB),
+        by = "CITYID", relationship = "many-to-many") %>% 
+    filter(COUNTY == focus_county & UGB != "Metro") %>%
+    filter(YEAR %in% c(1980, 2000, 2020)) %>%
+    select(CITY, POP = POPULATION, HU, OVER65, OCC, EMPRATE, PPH, MHI, YEAR) %>%
+    mutate(OVER65 = OVER65/POP*100, OCC = OCC/HU*100, EMPRATE = EMPRATE*100) %>%
+    mutate(across(OVER65:PPH, function(x)sprintf("%.2f", x))) %>%
+    mutate(across(POP:HU, function(x)prettyNum(x, ","))) %>%
+    mutate(OVER65 = str_c(OVER65, "%")) %>%
+    mutate(OCC = str_c(OCC, "%")) %>%
+    mutate(EMPRATE = str_c(EMPRATE, "%")) %>%
+    mutate(MHI = str_c("$", prettyNum(MHI, ","))) %>%
+    select(
+        CITY, YEAR, `Pop 65+` = OVER65, `Housing Units` = HU,
+        `Housing Occupancy` = OCC, `Persons Per Household` = PPH,
+        `Household Income` = MHI, `Employment Rate` = EMPRATE) %>%
+    pivot_longer(-(CITY:YEAR)) %>%
+    pivot_wider(names_from = YEAR) %>%
+    rename(Metric = name))
+
+cen_demog_df <- read_hist_data(OR_only = TRUE, adjust_for_inflation = FALSE)
+cen_demog_df %>%
+    select(-EMPRATE) %>%
+    group_by(YEAR) %>%
+    summarise(across(POPULATION:UNDER18, sum), .groups = "drop") %>%
+    mutate(COUNTY = "Oregon") %>%
+    bind_rows(cen_demog_df) %>%
+    mutate(UNDER18 = round(UNDER18/POPULATION*100, 2)) %>%
+    mutate(UNDER18 = str_c(sprintf("%.02f", UNDER18), "%")) %>%
+    mutate(OVER65 = round(OVER65/POPULATION*100, 2)) %>%
+    mutate(OVER65 = str_c(sprintf("%.02f", OVER65), "%")) %>%
+    mutate(NONWHITE = round((1-(WHITE/POPULATION))*100, 2)) %>%
+    mutate(NONWHITE = str_c(sprintf("%.02f", NONWHITE), "%")) %>%
+    mutate(PPH = round(((POPULATION - GQ)/OCC), 2)) %>%
+    mutate(PPH = str_c(
+        sprintf("%.02f", PPH), " (",
+        prettyNum(HU, big.mark = ","), " units)")) %>%
+    mutate(POPULATION = prettyNum(POPULATION, big.mark = ",")) %>%
+    filter(YEAR == 2020, COUNTY %in% c("Oregon", focus_county)) %>%
+    select(
+        COUNTY,
+        `Total Population` = POPULATION,
+        `Population Aged 0-17` = UNDER18,
+        `Population Aged 65+` = OVER65,
+        `Population non-White` = NONWHITE,
+        `Persons per Household` = PPH) %>%
+    mutate(COUNTY = fct_rev(fct_relevel(COUNTY, "Oregon"))) %>%
+    arrange(COUNTY) %>%
+    pivot_longer(-COUNTY, names_to = "Statistic") %>%
+    pivot_wider(names_from = COUNTY, values_from = value) %>%
+    knitr::kable(format = 'html')
+    
+```
+
+---
+
+# Jackson Employment Changes
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(sector_plots[[focus_county]], tooltip = "text")
+```
+
+---
+
+# Jackson Migration Flows
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px"}
+ggplotly(mig_plots[[focus_county]], tooltip = "text")
+```
+
+---
+
+# Jackson Population
+
+.pulll-left[
+Population growth has greatly slowed in the post-2020 time period, driven by a combination of slowing in-migration and fire driven out-migration. 
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$county_pop[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Jackson Compositional Changes
+
+.pulll-left[
+Net migration slowed dramatically post-2020 in tandem with declining natural change in the county.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$comp_change[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Jackson Births
+
+.pulll-left[
+Births have been on the decline in the county since 2007, and are expected to continue to decline in the short term before rebounding.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$births[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Jackson Deaths
+
+.pulll-left[
+Deaths have been increasing and are expected to continue to increase in the coming years.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$deaths[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Jackson Life Expectancy & TFR
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="750px", dpi=300}
+county_plots$sum_plots[[focus_county]]
+```
+
+---
+
+# Population Pyramids
+
+.pulll-left[
+Population aging is expected to continue, with the population becoming more "top-heavy" through the forecast period.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$age_structure[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+# Jackson Race and Ethnicity
+
+.pulll-left[
+The county's White population noticeably declined in the post-2020 period while the Hispanic population continued to grow.
+]
+
+.pulll-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="400px"}
+ggplotly(county_plots$raceN[[focus_county]], tooltip = "text")
+```
+]
+
+---
+
+
+# Jackson UGB Population Changes
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="500px", out.width="850px", dpi=300}
+ugb_plots$group_ugb[[focus_county]]
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Ashland in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Ashland`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Ashland") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Ashland UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Ashland`
+```
+
+---
+
+# Ashland UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Ashland`
+```
+
+---
+
+# Ashland UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Ashland`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Butte Falls in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Butte Falls`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Butte Falls") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Butte Falls UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Butte Falls`
+```
+
+---
+
+# Butte Falls UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Butte Falls`
+```
+
+---
+
+# Butte Falls UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Butte Falls`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Central Point in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Central Point`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Central Point") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Central Point UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Central Point`
+```
+
+---
+
+# Central Point UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Central Point`
+```
+
+---
+
+# Central Point UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Central Point`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Eagle Point in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Eagle Point`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Eagle Point") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Eagle Point UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Eagle Point`
+```
+
+---
+
+# Eagle Point UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Eagle Point`
+```
+
+---
+
+# Eagle Point UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Eagle Point`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Gold Hill in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Gold Hill`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Gold Hill") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Gold Hill UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Gold Hill`
+```
+
+---
+
+# Gold Hill UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Gold Hill`
+```
+
+---
+
+# Gold Hill UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Gold Hill`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Jacksonville in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Jacksonville`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Jacksonville") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Jacksonville UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Jacksonville`
+```
+
+---
+
+# Jacksonville UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Jacksonville`
+```
+
+---
+
+# Jacksonville UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Jacksonville`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Medford in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Medford`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Medford") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Medford UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Medford`
+```
+
+---
+
+# Medford UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Medford`
+```
+
+---
+
+# Medford UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Medford`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Phoenix in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Phoenix`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Phoenix") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Phoenix UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Phoenix`
+```
+
+---
+
+# Phoenix UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Phoenix`
+```
+
+---
+
+# Phoenix UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Phoenix`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Rogue River in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Rogue River`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Rogue River") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Rogue River UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Rogue River`
+```
+
+---
+
+# Rogue River UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Rogue River`
+```
+
+---
+
+# Rogue River UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Rogue River`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Shady Cove in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Shady Cove`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Shady Cove") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Shady Cove UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Shady Cove`
+```
+
+---
+
+# Shady Cove UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Shady Cove`
+```
+
+---
+
+# Shady Cove UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Shady Cove`
+```
+
+---
+
+class: city
+
+# Jackson UGBs: Talent in Context
+
+.pux-right[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="800px", out.height="400px", dpi=300}
+ugb_plots$hist_pop_house_plot[[focus_county]]$`Talent`
+```
+]
+
+.pux-left[
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.height="450px"}
+place_stat_df %>% 
+    filter(CITY == "Talent") %>%
+    select(-CITY) %>%
+    knitr::kable(format = "html")
+```
+]
+
+---
+
+# Jackson County: Talent UGB Boundaries
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, out.height="450px"}
+map_list$`Talent`
+```
+
+---
+
+# Talent UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$ind_ugb_plot[[focus_county]]$`Talent`
+```
+
+---
+
+# Talent UGB Pop Forecast
+
+```{r echo = FALSE, message = FALSE, warning = FALSE,out.width="750px", out.height="500px", dpi=300}
+ugb_plots$gr_compare[[focus_county]]$`Talent`
+```
+
+---
+
+
+
+class: center
+
+# Comments or Questions?
+
+## Contact PSUPRC
+Email: [askprc@pdx.edu](mailto:askprc@pdx.edu)  
+Telephone: 503-725-3922
+
+
+## Proposal Population Projections
+https://www.pdx.edu/population-research/population-forecasts
+
+

@@ -242,6 +242,11 @@ class: center, middle, inverse
 # Jackson County
 
 ---
+# Jackson in the News
+
+![destination](./medford_article.png)
+
+---
 # Summary of Considerations
 
 - Population growth has been consistent
@@ -249,6 +254,7 @@ class: center, middle, inverse
 - Most municipal areas unaffected 
 - Large impacts in areas outside of UGBs
 - Comments and last forecasts reflect this
+- Minor changes made to reflect updates to estimates and housing growth
 
 
 ---

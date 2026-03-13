@@ -242,6 +242,11 @@ class: center, middle, inverse
 # Josephine County
 
 ---
+# Josephine in the News
+
+![destination](./grants_pass_article.png)
+
+---
 # Summary of Considerations
 
 - Population growth has been slowing

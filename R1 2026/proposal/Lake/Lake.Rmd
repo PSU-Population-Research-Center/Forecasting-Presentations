@@ -242,6 +242,11 @@ class: center, middle, inverse
 # Lake County
 
 ---
+# Lake in the News
+
+![green_tech](./lakeview_article.png)
+
+---
 # Summary of Considerations
 
 - Lake County's population growth has been consistent but slow
